@@ -19,6 +19,7 @@ class Event(Model):  # type: ignore[misc]
     start_time = DateTimeField()
     end_time = DateTimeField()
     top_score = FloatField()
+    score = FloatField()
     false_positive = BooleanField()
     zones = JSONField()
     thumbnail = TextField()
@@ -30,6 +31,18 @@ class Event(Model):  # type: ignore[misc]
     retain_indefinitely = BooleanField(default=False)
     ratio = FloatField(default=1.0)
     plus_id = CharField(max_length=30)
+    model_hash = CharField(max_length=32)
+    detector_type = CharField(max_length=32)
+    model_type = CharField(max_length=32)
+
+
+class Timeline(Model):  # type: ignore[misc]
+    timestamp = DateTimeField()
+    camera = CharField(index=True, max_length=20)
+    source = CharField(index=True, max_length=20)  # ex: tracked object, audio, external
+    source_id = CharField(index=True, max_length=30)
+    class_type = CharField(max_length=50)  # ex: entered_zone, audio_heard
+    data = JSONField()  # ex: tracked object id, region, box, etc.
 
 
 class Recordings(Model):  # type: ignore[misc]

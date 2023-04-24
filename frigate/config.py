@@ -13,11 +13,12 @@ from pydantic import BaseModel, Extra, Field, validator, parse_obj_as
 from pydantic.fields import PrivateAttr
 
 from frigate.const import (
-    BASE_DIR,
     CACHE_DIR,
+    DEFAULT_DB_PATH,
     REGEX_CAMERA_NAME,
     YAML_EXT,
 )
+from frigate.detectors.detector_config import BaseDetectorConfig
 from frigate.util import (
     create_mask,
     deep_merge,
@@ -164,8 +165,6 @@ class RecordConfig(FrigateBaseModel):
         default=60,
         title="Number of minutes to wait between cleanup runs.",
     )
-    # deprecated - to be removed in a future version
-    retain_days: Optional[float] = Field(title="Recording retention period in days.")
     retain: RecordRetainConfig = Field(
         default_factory=RecordRetainConfig, title="Record retention settings."
     )
@@ -733,9 +732,7 @@ class CameraConfig(FrigateBaseModel):
 
 
 class DatabaseConfig(FrigateBaseModel):
-    path: str = Field(
-        default=os.path.join(BASE_DIR, "frigate.db"), title="Database path."
-    )
+    path: str = Field(default=DEFAULT_DB_PATH, title="Database path.")
 
 
 class LogLevelEnum(str, Enum):
@@ -774,7 +771,7 @@ def verify_config_roles(camera_config: CameraConfig) -> None:
 
 def verify_valid_live_stream_name(
     frigate_config: FrigateConfig, camera_config: CameraConfig
-) -> None:
+) -> ValueError | None:
     """Verify that a restream exists to use for live view."""
     if (
         camera_config.live.stream_name
@@ -783,16 +780,6 @@ def verify_valid_live_stream_name(
         return ValueError(
             f"No restream with name {camera_config.live.stream_name} exists for camera {camera_config.name}."
         )
-
-
-def verify_old_retain_config(camera_config: CameraConfig) -> None:
-    """Leave log if old retain_days is used."""
-    if not camera_config.record.retain_days is None:
-        logger.warning(
-            "The 'retain_days' config option has been DEPRECATED and will be removed in a future version. Please use the 'days' setting under 'retain'"
-        )
-        if camera_config.record.retain.days == 0:
-            camera_config.record.retain.days = camera_config.record.retain_days
 
 
 def verify_recording_retention(camera_config: CameraConfig) -> None:
@@ -862,7 +849,7 @@ class FrigateConfig(FrigateBaseModel):
     model: ModelConfig = Field(
         default_factory=ModelConfig, title="Detection model configuration."
     )
-    detectors: Dict[str, DetectorConfig] = Field(
+    detectors: Dict[str, BaseDetectorConfig] = Field(
         default=DEFAULT_DETECTORS,
         title="Detector hardware configuration.",
     )
@@ -1001,7 +988,6 @@ class FrigateConfig(FrigateBaseModel):
 
             verify_config_roles(camera_config)
             verify_valid_live_stream_name(config, camera_config)
-            verify_old_retain_config(camera_config)
             verify_recording_retention(camera_config)
             verify_recording_segments_setup_with_reasonable_time(camera_config)
             verify_zone_objects_are_tracked(camera_config)
@@ -1046,7 +1032,15 @@ class FrigateConfig(FrigateBaseModel):
                 detector_config.model.dict(exclude_unset=True),
                 config.model.dict(exclude_unset=True),
             )
+
+            if not "path" in merged_model:
+                if detector_config.type == "cpu":
+                    merged_model["path"] = "/cpu_model.tflite"
+                elif detector_config.type == "edgetpu":
+                    merged_model["path"] = "/edgetpu_model.tflite"
+
             detector_config.model = ModelConfig.parse_obj(merged_model)
+            detector_config.model.compute_model_hash()
             config.detectors[key] = detector_config
 
         return config

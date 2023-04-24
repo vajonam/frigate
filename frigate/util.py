@@ -772,7 +772,6 @@ def get_docker_memlimit_bytes() -> int:
 
     # check running a supported cgroups version
     if get_cgroups_version() == "cgroup2":
-
         memlimit_command = ["cat", "/sys/fs/cgroup/memory.max"]
 
         p = sp.run(
@@ -817,7 +816,6 @@ def get_cpu_stats() -> dict[str, dict]:
         for line in lines:
             stats = list(filter(lambda a: a != "", line.strip().split(" ")))
             try:
-
                 if docker_memlimit > 0:
                     mem_res = int(stats[5])
                     mem_pct = str(
@@ -1067,3 +1065,14 @@ def get_tz_modifiers(tz_name: str) -> Tuple[str, str]:
     hour_modifier = f"{hours_offset} hour"
     minute_modifier = f"{minutes_offset} minute"
     return hour_modifier, minute_modifier
+
+
+def to_relative_box(
+    width: int, height: int, box: Tuple[int, int, int, int]
+) -> Tuple[int, int, int, int]:
+    return (
+        box[0] / width,  # x
+        box[1] / height,  # y
+        (box[2] - box[0]) / width,  # w
+        (box[3] - box[1]) / height,  # h
+    )

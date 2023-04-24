@@ -54,7 +54,8 @@ class TestConfig(unittest.TestCase):
                     "type": "openvino",
                 },
             },
-            "model": {"path": "/default.tflite", "width": 512},
+            # needs to be a file that will exist, doesnt matter what
+            "model": {"path": "/etc/hosts", "width": 512},
         }
 
         frigate_config = FrigateConfig(**(deep_merge(config, self.minimal)))
@@ -72,10 +73,10 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.detectors["edgetpu"].device is None
         assert runtime_config.detectors["openvino"].device is None
 
-        assert runtime_config.model.path == "/default.tflite"
+        assert runtime_config.model.path == "/etc/hosts"
         assert runtime_config.detectors["cpu"].model.path == "/cpu_model.tflite"
         assert runtime_config.detectors["edgetpu"].model.path == "/edgetpu_model.tflite"
-        assert runtime_config.detectors["openvino"].model.path == "/default.tflite"
+        assert runtime_config.detectors["openvino"].model.path == "/etc/hosts"
 
         assert runtime_config.model.width == 512
         assert runtime_config.detectors["cpu"].model.width == 512
@@ -673,7 +674,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].detect.max_disappeared == 5 * 5
 
     def test_motion_frame_height_wont_go_below_120(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -702,7 +702,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].motion.frame_height == 50
 
     def test_motion_contour_area_dynamic(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -731,7 +730,6 @@ class TestConfig(unittest.TestCase):
         assert round(runtime_config.cameras["back"].motion.contour_area) == 30
 
     def test_merge_labelmap(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "model": {"labelmap": {7: "truck"}},
@@ -761,7 +759,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.model.merged_labelmap[7] == "truck"
 
     def test_default_labelmap_empty(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -790,7 +787,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.model.merged_labelmap[0] == "person"
 
     def test_default_labelmap(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "model": {"width": 320, "height": 320},
@@ -820,7 +816,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.model.merged_labelmap[0] == "person"
 
     def test_fails_on_invalid_role(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -849,7 +844,6 @@ class TestConfig(unittest.TestCase):
         self.assertRaises(ValidationError, lambda: FrigateConfig(**config))
 
     def test_fails_on_missing_role(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -880,7 +874,6 @@ class TestConfig(unittest.TestCase):
         self.assertRaises(ValueError, lambda: frigate_config.runtime_config)
 
     def test_works_on_missing_role_multiple_cams(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -929,7 +922,6 @@ class TestConfig(unittest.TestCase):
         runtime_config = frigate_config.runtime_config
 
     def test_global_detect(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "detect": {"max_disappeared": 1},
@@ -959,7 +951,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].detect.height == 1080
 
     def test_default_detect(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -983,7 +974,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].detect.height == 720
 
     def test_global_detect_merge(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "detect": {"max_disappeared": 1, "height": 720},
@@ -1014,7 +1004,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].detect.width == 1920
 
     def test_global_snapshots(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "snapshots": {"enabled": True},
@@ -1042,7 +1031,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].snapshots.height == 100
 
     def test_default_snapshots(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -1066,7 +1054,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].snapshots.quality == 70
 
     def test_global_snapshots_merge(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "snapshots": {"bounding_box": False, "height": 300},
@@ -1096,7 +1083,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].snapshots.enabled
 
     def test_global_rtmp_disabled(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -1119,7 +1105,6 @@ class TestConfig(unittest.TestCase):
         assert not runtime_config.cameras["back"].rtmp.enabled
 
     def test_default_not_rtmp(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -1142,7 +1127,6 @@ class TestConfig(unittest.TestCase):
         assert not runtime_config.cameras["back"].rtmp.enabled
 
     def test_global_rtmp_merge(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "rtmp": {"enabled": False},
@@ -1169,7 +1153,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].rtmp.enabled
 
     def test_global_rtmp_default(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -1196,7 +1179,6 @@ class TestConfig(unittest.TestCase):
         assert not runtime_config.cameras["back"].rtmp.enabled
 
     def test_global_jsmpeg(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "live": {"quality": 4},
@@ -1220,7 +1202,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].live.quality == 4
 
     def test_default_live(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -1243,7 +1224,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].live.quality == 8
 
     def test_global_live_merge(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "live": {"quality": 4, "height": 480},
@@ -1271,7 +1251,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].live.height == 480
 
     def test_global_timestamp_style(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "timestamp_style": {"position": "bl"},
@@ -1295,7 +1274,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].timestamp_style.position == "bl"
 
     def test_default_timestamp_style(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "cameras": {
@@ -1318,7 +1296,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].timestamp_style.position == "tl"
 
     def test_global_timestamp_style_merge(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "rtmp": {"enabled": False},
@@ -1345,7 +1322,6 @@ class TestConfig(unittest.TestCase):
         assert runtime_config.cameras["back"].timestamp_style.thickness == 4
 
     def test_allow_retain_to_be_a_decimal(self):
-
         config = {
             "mqtt": {"host": "mqtt"},
             "snapshots": {"retain": {"default": 1.5}},
